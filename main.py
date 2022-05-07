@@ -33,15 +33,11 @@ def toc(tstart, nm=""):
   print('%s took: %s sec.\n' % (nm,(time.time() - tstart)))
 
 
-def runtest(envmap, robotstart, targetstart, state_space):
+def runtest(envmap, robotstart, targetstart):
   # current positions of the target and robot
   robotpos = np.copy(robotstart);
   targetpos = np.copy(targetstart);
-  graph = state_space.graph
-  reverse_graph = state_space.reverse_graph
-  env = Environment(envmap, targetpos, graph, reverse_graph)
-  for key in graph.keys():
-    graph[key]['h'] = env.getHeuristic(reverse_graph[tuple(robotstart)], targetstart)
+  env = Environment(envmap, targetpos)
   
   # environment
   # envmap = loadtxt(mapfile)
@@ -63,10 +59,10 @@ def runtest(envmap, robotstart, targetstart, state_space):
   caught = False
   for i in range(20000):
     # call robot planner
-    planner = RTAA(robotpos, targetpos, graph, reverse_graph, env)
+    planner = RTAA(robotpos, targetpos,env, envmap)
     t0 = tic()
     # newrobotpos = robotplanner(envmap, robotpos, targetpos, state_space)
-    newrobotpos, graph = planner.rtaa()
+    newrobotpos = planner.rtaa()
     # compute move time for the target, if it is greater than 2 sec, the target will move multiple steps
     print(f'planning time was : {tic() - t0}')
     movetime = max(1, math.ceil((tic()-t0)/2.0))
@@ -118,80 +114,79 @@ def test_map0():
   targetstart = np.array([5, 3])
   mapfile = 'maps/map0.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space )
+  
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map1():
   robotstart = np.array([699, 799])
   targetstart = np.array([699, 1699])
   mapfile = 'maps/map1.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map2():
   robotstart = np.array([0, 2])
   targetstart = np.array([7, 9])
   mapfile = 'maps/map2.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+ # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
   
 def test_map3():
   robotstart = np.array([249, 249])
   targetstart = np.array([399, 399])
   mapfile = 'maps/map3.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  # return runtest(envmap, robotstart, targetstart, state_space)
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map4():
   robotstart = np.array([0, 0])
   targetstart = np.array([5, 6])
   mapfile = 'maps/map4.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map5():
   robotstart = np.array([0, 0])
   targetstart = np.array([29, 59])
   mapfile = 'maps/map5.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map6():
   robotstart = np.array([0, 0])
   targetstart = np.array([29, 36])
   mapfile = 'maps/map6.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+ # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map7():
   robotstart = np.array([0, 0])
   targetstart = np.array([4998, 4998])
   mapfile = 'maps/map7.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 
 def test_map1b():
@@ -199,31 +194,30 @@ def test_map1b():
   targetstart = np.array([1649, 1899])
   mapfile = 'maps/map1.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map3b():
   robotstart = np.array([74, 249])
   targetstart = np.array([399, 399])
   mapfile = 'maps/map3.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 def test_map3c():
   robotstart = np.array([4, 399])
   targetstart = np.array([399, 399])
   mapfile = 'maps/map3.txt'
   envmap = loadtxt(mapfile)
-  state_space = StateSpace(envmap)
-  state_space.create_hash()
-  state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, state_space)
-  
+  # state_space = StateSpace(envmap)
+  # state_space.create_hash()
+  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
+  return runtest(envmap, robotstart, targetstart)
 
 if __name__ == "__main__":
   # you should change the following line to test different maps

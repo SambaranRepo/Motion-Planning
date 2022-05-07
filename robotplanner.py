@@ -30,18 +30,40 @@ def robotplanner(envmap, robotpos, targetpos, state_space):
   #         newrobotpos[0] = newx
   #         newrobotpos[1] = newy
   
+graph = {}
 
+class Node():
+  def __init__(self, envmap, targetpos):
+    self.x_max = envmap.shape[0]
+    self.y_max = envmap.shape[1]
+    self.target = targetpos
+  
+  def node_id(self, x, y):
+    self.id = self.y_max * x + y
+  
+  def heuristic(self,x,y):
+    self.h = np.linalg.norm([x, y]- self.target, 1)
+  
+  def label(self):
+    self.g = np.inf
+  
+  def return_attribs(self,x,y):
+    self.node_id(x,y)
+    self.heuristic(x,y)
+    self.label()
+    return {self.id: {'pos': (x, y), 'g': self.g, 'h':self.h}}
 
 
 class Environment():
-  def __init__(self, envmap, target_pos, graph, reverse_graph):
+  def __init__(self, envmap, target_pos):
     self.map = envmap
     self.target_pos = target_pos
     self.numofdirs = 8
     self.dX = [-1, -1, -1, 0, 0, 1, 1, 1]
     self.dY = [-1,  0,  1, -1, 1, -1, 0, 1]
-    self.graph = graph
-    self.reverse_graph = reverse_graph
+    self.node = Node(envmap, target_pos)
+    self.x_max = self.map.shape[0]
+    self.y_max = self.map.shape[1]
 
   def isGoal(self, node):
     if all(self.graph[node]['pos'] == self.target_pos):
@@ -50,7 +72,7 @@ class Environment():
       return False
 
   def getSuccessors(self, node):
-    current_pos = self.graph[node]['pos']
+    current_pos = self.node.return_attribs(node // self.y_max, node % self.y_max)[node]['pos']
     successor_nodes = []
     costs = []
     action_id = []
@@ -67,7 +89,7 @@ class Environment():
         else:
           cost = np.linalg.norm([self.dX[i], self.dY[i]])
         # print(f'graph : {self.graph}')
-        child = self.reverse_graph[tuple([x_new, y_new])]
+        child = self.y_max * x_new + y_new
 
         successor_nodes.append(child)
         costs.append(cost)
@@ -78,26 +100,28 @@ class Environment():
     # print(f'node : {node}')
     # print(f"position : {self.graph[node]['pos']}")
     # print(f'target pos : {target_pos}')
-    return np.linalg.norm(self.graph[node]['pos'] - target_pos)
+    pos = self.node.return_attribs(node // self.y_max, node % self.y_max)[node]['pos']
+    return np.linalg.norm(pos - target_pos)
 
 class RTAA():
-  def __init__(self, robotpos, targetpos, graph, reverse_graph, env):
+  def __init__(self, robotpos, targetpos, env, envmap):
     self.env = env
-    self.graph = graph
-    self.reverse_graph = reverse_graph
+    self.node = Node(envmap, targetpos)
+    self.x_max = envmap.shape[0]
+    self.y_max = envmap.shape[1]
     self.target_pos = targetpos
-    self.target_id = self.reverse_graph[tuple(self.target_pos)]
+    self.target_id = self.y_max * targetpos[0] + targetpos[1]
     self.robot_pos = robotpos
-    self.robot_id = self.reverse_graph[tuple(self.robot_pos)]
+    self.robot_id = self.y_max * robotpos[0] + robotpos[1]
     self.open = pqdict()
     self.close = []
     self.parent = {}
-    self.graph[self.robot_id]['g'] = 0
-    print(f"current g value at start : {self.graph[self.reverse_graph[tuple(robotpos)]]['g']}")
+    graph.update(self.node.return_attribs(*self.robot_pos))
+    graph[self.robot_id]['g'] = 0
 
   def rtaa(self):
-    robot_id = self.reverse_graph[tuple(self.robot_pos)]
-    self.open[robot_id] = self.graph[robot_id]['g'] + self.graph[robot_id]['h']
+    robot_id = self.robot_id
+    self.open[robot_id] = graph[robot_id]['g'] + graph[robot_id]['h']
     max_nodes = 500
     expanded = 0
     caught = False
@@ -110,14 +134,19 @@ class RTAA():
         break
       else:
         for i in range(len(successors)):
-          if self.graph[successors[i]]['g'] > self.graph[popped_id]['g'] + costs[i]:
-            self.graph[successors[i]]['g'] = self.graph[popped_id]['g'] + costs[i]
+          if successors[i] not in graph:
+            self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max)
+            graph.update(self.child)
+          
+
+          if graph[successors[i]]['g'] > graph[popped_id]['g'] + costs[i]:
+            graph[successors[i]]['g'] = graph[popped_id]['g'] + costs[i]
             if successors[i] in self.open:
-              self.open[successors[i]] = self.graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)
+              self.open[successors[i]] = graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)
               # self.open[successors[i]] = self.graph[successors[i]]['g'] + self.graph[successors[i]]['h']
               self.parent[successors[i]] = popped_id
             elif successors[i] not in self.open and successors[i] not in self.close:
-              self.open.update({successors[i] : self.graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
+              self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
               # self.open.update({successors[i] : self.graph[successors[i]]['g'] +self.graph[successors[i]]['h']})
               self.parent.update({successors[i] : popped_id})
         
@@ -127,14 +156,14 @@ class RTAA():
     
     
     for key in self.open:
-      self.graph[key]['h'] = self.env.getHeuristic(key, self.target_pos)
+      graph[key]['h'] = self.env.getHeuristic(key, self.target_pos)
 
     if not caught:
       best_open_node, f_star = self.open.popitem()
     else:
-      best_open_node, f_star = self.target_id, self.graph[self.target_id]['g']
+      best_open_node, f_star = self.target_id, graph[self.target_id]['g'] + graph[self.target_id]['h'] 
       for key in self.close:
-        self.graph[key]['h'] = f_star - self.graph[key]['g']
+        graph[key]['h'] = f_star - graph[key]['g']
     child = best_open_node
     par = 0
     while True:
@@ -147,10 +176,10 @@ class RTAA():
     next_node = child
   
     
-    
-    robotnextpos = self.graph[next_node]['pos']
-    
-    return robotnextpos, self.graph
+    self.next = (next_node // self.y_max, next_node % self.y_max)
+    robotnextpos = graph[next_node]['pos']
+    print(f'robot next pos : {robotnextpos[0], robotnextpos[1]}')
+    return robotnextpos
 
   
 
