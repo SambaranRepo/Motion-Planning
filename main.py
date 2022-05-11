@@ -1,30 +1,21 @@
+from distutils.dep_util import newer_group
 import numpy as np
 import math
-from numpy import loadtxt
+from numpy import isin, loadtxt
 import matplotlib.pyplot as plt
 plt.ion()
 import time
 from pqdict import minpq
 from robotplanner import *
 from targetplanner import targetplanner
-
-
-class StateSpace():
-  '''
-  : create a hash map for the environment
-  '''
-  def __init__(self, env_map):
-    self.env = env_map
-    self.graph = {}
-    self.reverse_graph = {}
-
-  def create_hash(self):
-    node = 0
-    for x in range(self.env.shape[0]):
-      for y in range(self.env.shape[1]):
-        self.graph.update({node : {'pos':(x,y),'g':np.inf,'h':0, 'closed':False}})
-        self.reverse_graph.update({(x,y) : node})
-        node += 1
+from tqdm import tqdm
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('planner', help='Which Motion Planning model would you like to implement : \n 1. Agent Centered Search ---> rtaa \n \
+2. Anytime Search ---> ara')
+args = parser.parse_args()
+algorithm = args.planner
+assert isinstance(algorithm, str)
 
 # functions to time how long planning takes  
 def tic():
@@ -33,12 +24,12 @@ def toc(tstart, nm=""):
   print('%s took: %s sec.\n' % (nm,(time.time() - tstart)))
 
 
-def runtest(envmap, robotstart, targetstart):
+def runtest(envmap, robotstart, targetstart, map):
   # current positions of the target and robot
   robotpos = np.copy(robotstart);
   targetpos = np.copy(targetstart);
   env = Environment(envmap, targetpos)
-  
+  folder = './images/'
   # environment
   # envmap = loadtxt(mapfile)
     
@@ -53,20 +44,29 @@ def runtest(envmap, robotstart, targetstart):
   hr = ax.plot(robotpos[0], robotpos[1], 'bs')
   ht = ax.plot(targetpos[0], targetpos[1], 'rs')
   f.canvas.flush_events()
-  
+  robot_trajectory = []
+  target_trajectory = []
+  robot_trajectory.append(tuple(robotstart))
+  target_trajectory.append(tuple(targetstart))
   # now comes the main loop
   numofmoves = 0
   caught = False
-  for i in range(20000):
+  for i in tqdm(range(20000)):
     # call robot planner
-    planner = RTAA(robotpos, targetpos,env, envmap)
+    if algorithm == 'rtaa':
+      planner = RTAA(robotpos, targetpos,env, envmap)
+    else:
+       planner = AnytimeA_star(robotpos, targetpos,env, envmap)
+    type_planner = 'AgentCentred' if isinstance(planner, RTAA) else 'Anytime'
     t0 = tic()
+
     # newrobotpos = robotplanner(envmap, robotpos, targetpos, state_space)
-    newrobotpos = planner.rtaa()
+    newrobotpos = planner.plan()
+    robot_trajectory.append(newrobotpos)
     # compute move time for the target, if it is greater than 2 sec, the target will move multiple steps
     print(f'planning time was : {tic() - t0}')
     movetime = max(1, math.ceil((tic()-t0)/2.0))
-    print(f'target moves : {movetime} steps')
+    # print(f'target moves : {movetime} steps')
     #check that the new commanded position is valid
     if ( newrobotpos[0] < 0 or newrobotpos[0] >= envmap.shape[0] or \
          newrobotpos[1] < 0 or newrobotpos[1] >= envmap.shape[1] ):
@@ -81,7 +81,7 @@ def runtest(envmap, robotstart, targetstart):
 
     # call target planner to see how the target moves within the robot planning time
     newtargetpos = targetplanner(envmap, robotpos, targetpos, targetstart, movetime)
-    
+    target_trajectory.append(newtargetpos)
     # make the moves
     robotpos = newrobotpos
     targetpos = newtargetpos
@@ -103,8 +103,28 @@ def runtest(envmap, robotstart, targetstart):
     if (abs(robotpos[0]-targetpos[0]) <= 1 and abs(robotpos[1]-targetpos[1]) <= 1):
       print('robotpos = (%d,%d)' %(robotpos[0],robotpos[1]))
       print('targetpos = (%d,%d)' %(targetpos[0],targetpos[1]))
+      robot_trajectory.append(targetpos)
+      x = [item[0] for item in robot_trajectory]
+      y= [item[1] for item in robot_trajectory]
+      target_x = [item[0] for item in target_trajectory]
+      target_y = [item[1] for item in target_trajectory]
       caught = True
+      f, ax = plt.subplots()
+      ax.imshow( envmap.T, interpolation="none", cmap='gray_r', origin='lower', \
+                extent=(-0.5, envmap.shape[0]-0.5, -0.5, envmap.shape[1]-0.5) )
+      ax.axis([-0.5, envmap.shape[0]-0.5, -0.5, envmap.shape[1]-0.5])
+      ax.set_xlabel('x')
+      ax.set_ylabel('y')  
+      hr = ax.plot(robotstart[0], robotstart[1], 'bs')
+      ht = ax.plot(targetstart[0], targetstart[1], 'rs')
+      hr = ax.plot(x, y, 'b')
+      ht = ax.plot(target_x, target_y, 'r')
+      hr = ax.plot(x[-1], y[-1], 'bx')
+      # plt.show(block = True)
+      plt.savefig(folder + map + f'_{type_planner}.png', format = 'png', bbox_inches = 'tight')
       break
+
+      
 
   return caught, numofmoves
 
@@ -115,7 +135,7 @@ def test_map0():
   mapfile = 'maps/map0.txt'
   envmap = loadtxt(mapfile)
   
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map0')
 
 def test_map1():
   robotstart = np.array([699, 799])
@@ -125,7 +145,7 @@ def test_map1():
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map1')
 
 def test_map2():
   robotstart = np.array([0, 2])
@@ -135,7 +155,7 @@ def test_map2():
  # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map2')
   
 def test_map3():
   robotstart = np.array([249, 249])
@@ -146,7 +166,7 @@ def test_map3():
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   # return runtest(envmap, robotstart, targetstart, state_space)
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map3')
 
 def test_map4():
   robotstart = np.array([0, 0])
@@ -156,7 +176,7 @@ def test_map4():
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map4')
 
 def test_map5():
   robotstart = np.array([0, 0])
@@ -166,7 +186,7 @@ def test_map5():
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map5')
 
 def test_map6():
   robotstart = np.array([0, 0])
@@ -176,7 +196,7 @@ def test_map6():
  # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map6')
 
 def test_map7():
   robotstart = np.array([0, 0])
@@ -186,7 +206,7 @@ def test_map7():
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map7')
 
 
 def test_map1b():
@@ -197,7 +217,7 @@ def test_map1b():
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map1b')
 
 def test_map3b():
   robotstart = np.array([74, 249])
@@ -207,7 +227,7 @@ def test_map3b():
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map3b')
 
 def test_map3c():
   robotstart = np.array([4, 399])
@@ -217,7 +237,7 @@ def test_map3c():
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart)
+  return runtest(envmap, robotstart, targetstart, 'map3c')
 
 if __name__ == "__main__":
   # you should change the following line to test different maps

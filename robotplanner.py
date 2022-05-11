@@ -1,10 +1,10 @@
+from queue import Empty
 from urllib import robotparser
 import numpy as np
 import math
 import time
 from pqdict import pqdict
 from targetplanner import targetplanner
-
 def robotplanner(envmap, robotpos, targetpos, state_space):
   # all possible directions of the robot
   numofdirs = 8
@@ -47,11 +47,14 @@ class Node():
   def label(self):
     self.g = np.inf
   
-  def return_attribs(self,x,y):
+  def return_attribs(self,x,y, ara = False):
     self.node_id(x,y)
     self.heuristic(x,y)
     self.label()
-    return {self.id: {'pos': (x, y), 'g': self.g, 'h':self.h}}
+    if ara : 
+      return {self.id: {'pos': (x, y), 'g': self.g, 'h':self.h, 'v' : np.inf}}
+    else:
+      return {self.id: {'pos': (x, y), 'g': self.g, 'h':self.h}}
 
 
 class Environment():
@@ -119,10 +122,10 @@ class RTAA():
     graph.update(self.node.return_attribs(*self.robot_pos))
     graph[self.robot_id]['g'] = 0
 
-  def rtaa(self):
+  def plan(self):
     robot_id = self.robot_id
     self.open[robot_id] = graph[robot_id]['g'] + graph[robot_id]['h']
-    max_nodes = 500
+    max_nodes = 1000
     expanded = 0
     caught = False
     while expanded < max_nodes:
@@ -142,12 +145,12 @@ class RTAA():
           if graph[successors[i]]['g'] > graph[popped_id]['g'] + costs[i]:
             graph[successors[i]]['g'] = graph[popped_id]['g'] + costs[i]
             if successors[i] in self.open:
-              self.open[successors[i]] = graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)
-              # self.open[successors[i]] = self.graph[successors[i]]['g'] + self.graph[successors[i]]['h']
+              # self.open[successors[i]] = graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)
+              self.open[successors[i]] = graph[successors[i]]['g'] + graph[successors[i]]['h']
               self.parent[successors[i]] = popped_id
             elif successors[i] not in self.open and successors[i] not in self.close:
-              self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
-              # self.open.update({successors[i] : self.graph[successors[i]]['g'] +self.graph[successors[i]]['h']})
+              # self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
+              self.open.update({successors[i] : graph[successors[i]]['g'] + graph[successors[i]]['h']})
               self.parent.update({successors[i] : popped_id})
         
       expanded = len(self.close)
@@ -157,6 +160,7 @@ class RTAA():
     
     for key in self.open:
       graph[key]['h'] = self.env.getHeuristic(key, self.target_pos)
+      self.open[key] = graph[key]['h']
 
     if not caught:
       best_open_node, f_star = self.open.popitem()
@@ -181,7 +185,97 @@ class RTAA():
     print(f'robot next pos : {robotnextpos[0], robotnextpos[1]}')
     return robotnextpos
 
-  
+
+class AnytimeA_star():
+  def __init__(self, robotpos, targetpos, env, envmap):
+    self.env = env
+    self.node = Node(envmap, targetpos)
+    self.x_max = envmap.shape[0]
+    self.y_max = envmap.shape[1]
+    self.target_pos = targetpos
+    self.target_id = self.y_max * targetpos[0] + targetpos[1]
+    self.robot_pos = robotpos
+    self.robot_id = self.y_max * robotpos[0] + robotpos[1]
+    self.open = pqdict()
+    self.close = []
+    self.parent = {}
+    graph.update(self.node.return_attribs(*self.robot_pos, ara = True))
+    graph.update(self.node.return_attribs(*self.target_pos, ara = True))
+    graph[self.robot_id]['g'] = 0
+
+    self.epsilon = 50
+
+  def compute_path(self):
+    incons = pqdict()
+    while graph[self.target_id]['g'] + self.epsilon * graph[self.target_id]['h'] > min(self.open):
+      popped_id = self.open.pop()
+      self.close.append(popped_id)
+      graph[popped_id]['v'] = graph[popped_id]['g']
+      if self.target_id in self.close:
+        break
+      else:
+        successors, costs, action = self.env.getSuccessors(popped_id)
+        for i in range(len(successors)):
+          if successors[i] not in graph:
+              self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max, ara = True)
+              graph.update(self.child)
+          
+          if graph[successors[i]]['g'] > graph[popped_id]['g'] + costs[i]:
+              graph[successors[i]]['g'] = graph[popped_id]['g'] + costs[i]
+              self.parent[successors[i]] = popped_id
+              if successors[i] not in self.close:
+                self.open.update({successors[i] : graph[successors[i]]['g'] + self.epsilon * self.env.getHeuristic(successors[i], self.target_pos)})
+              else:
+                incons.update({successors[i] : graph[successors[i]]['g'] + self.epsilon * self.env.getHeuristic(successors[i], self.target_pos)})
+      if len(self.open) == 0:
+        break
+
+    t2 = time.time()
+    child = self.target_id
+    par = 0
+    while True:
+      par = self.parent[child]
+      if par == self.robot_id:
+        break
+      else:
+        child = par
+    t1 = time.time()
+
+    print(f'time taken to search for next node : {t1 - t2}')
+
+    # successors, costs, action = self.env.getSuccessors(self.robot_id)
+    # next_f = [graph[successors[i]]['g'] + graph[successors[i]]['h'] for i in range(len(successors))]
+
+    # next_node = successors[np.argmin(next_f)]
+    next_node = child
+    return incons, tuple(graph[next_node]['pos'])
+
+  def plan(self):
+    self.open[self.robot_id] = graph[self.robot_id]['g'] + self.epsilon * graph[self.robot_id]['h']
+    t0 = time.time()
+    # print(f'starting time : {t0}')
+    while self.epsilon >= 1:
+      self.close = []
+      self.incons = {}
+      self.incons, path = self.compute_path()
+      t1 = time.time()
+      if t1 - t0 >= 0.5:
+        print(f'The shortest path obtained is : {self.epsilon} epsilon sub-optimal')
+        return path
+      else:
+        self.epsilon -= 2
+        for key in self.incons.keys():
+          self.open.additem(key, self.incons[key])
+      if len(self.open) == 0:
+        break
+    
+
+    return path
+
+
+
+
+
 
 
 
