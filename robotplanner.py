@@ -100,9 +100,6 @@ class Environment():
     return successor_nodes, costs, action_id
 
   def getHeuristic(self, node, target_pos):
-    # print(f'node : {node}')
-    # print(f"position : {self.graph[node]['pos']}")
-    # print(f'target pos : {target_pos}')
     pos = self.node.return_attribs(node // self.y_max, node % self.y_max)[node]['pos']
     return np.linalg.norm(pos - target_pos)
 
@@ -125,7 +122,7 @@ class RTAA():
   def plan(self):
     robot_id = self.robot_id
     self.open[robot_id] = graph[robot_id]['g'] + graph[robot_id]['h']
-    max_nodes = 1000
+    max_nodes = 500
     expanded = 0
     caught = False
     while expanded < max_nodes:
@@ -144,30 +141,35 @@ class RTAA():
 
           if graph[successors[i]]['g'] > graph[popped_id]['g'] + costs[i]:
             graph[successors[i]]['g'] = graph[popped_id]['g'] + costs[i]
+            self.parent.update({successors[i] : popped_id})
+
             if successors[i] in self.open:
-              # self.open[successors[i]] = graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)
-              self.open[successors[i]] = graph[successors[i]]['g'] + graph[successors[i]]['h']
+              self.open[successors[i]] = graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)
+              # self.open[successors[i]] = graph[successors[i]]['g'] + graph[successors[i]]['h']
               self.parent[successors[i]] = popped_id
             elif successors[i] not in self.open and successors[i] not in self.close:
-              # self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
-              self.open.update({successors[i] : graph[successors[i]]['g'] + graph[successors[i]]['h']})
-              self.parent.update({successors[i] : popped_id})
-        
+              self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
+              # self.open.update({successors[i] : graph[successors[i]]['g'] + graph[successors[i]]['h']})
       expanded = len(self.close)
+      if len(self.open) == 0:
+        break
 
 
     
     
+  
     for key in self.open:
       graph[key]['h'] = self.env.getHeuristic(key, self.target_pos)
-      self.open[key] = graph[key]['h']
-
+      self.open[key] = graph[key]['g'] + graph[key]['h']
+   
     if not caught:
       best_open_node, f_star = self.open.popitem()
     else:
       best_open_node, f_star = self.target_id, graph[self.target_id]['g'] + graph[self.target_id]['h'] 
-      for key in self.close:
-        graph[key]['h'] = f_star - graph[key]['g']
+    
+    for key in self.close:
+      graph[key]['h'] = f_star - graph[key]['g']
+    
     child = best_open_node
     par = 0
     while True:
@@ -182,7 +184,6 @@ class RTAA():
     
     self.next = (next_node // self.y_max, next_node % self.y_max)
     robotnextpos = graph[next_node]['pos']
-    print(f'robot next pos : {robotnextpos[0], robotnextpos[1]}')
     return robotnextpos
 
 
@@ -203,7 +204,7 @@ class AnytimeA_star():
     graph.update(self.node.return_attribs(*self.target_pos, ara = True))
     graph[self.robot_id]['g'] = 0
 
-    self.epsilon = 50
+    self.epsilon = 10
 
   def compute_path(self):
     incons = pqdict()
@@ -241,29 +242,21 @@ class AnytimeA_star():
         child = par
     t1 = time.time()
 
-    print(f'time taken to search for next node : {t1 - t2}')
-
-    # successors, costs, action = self.env.getSuccessors(self.robot_id)
-    # next_f = [graph[successors[i]]['g'] + graph[successors[i]]['h'] for i in range(len(successors))]
-
-    # next_node = successors[np.argmin(next_f)]
     next_node = child
     return incons, tuple(graph[next_node]['pos'])
 
   def plan(self):
     self.open[self.robot_id] = graph[self.robot_id]['g'] + self.epsilon * graph[self.robot_id]['h']
     t0 = time.time()
-    # print(f'starting time : {t0}')
     while self.epsilon >= 1:
       self.close = []
       self.incons = {}
       self.incons, path = self.compute_path()
       t1 = time.time()
-      if t1 - t0 >= 0.5:
-        print(f'The shortest path obtained is : {self.epsilon} epsilon sub-optimal')
+      if t1 - t0 >= 1:
         return path
       else:
-        self.epsilon -= 2
+        self.epsilon -= 0.5
         for key in self.incons.keys():
           self.open.additem(key, self.incons[key])
       if len(self.open) == 0:
@@ -271,12 +264,3 @@ class AnytimeA_star():
     
 
     return path
-
-
-
-
-
-
-
-
-

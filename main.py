@@ -62,6 +62,7 @@ def runtest(envmap, robotstart, targetstart, map):
 
     # newrobotpos = robotplanner(envmap, robotpos, targetpos, state_space)
     newrobotpos = planner.plan()
+    print(f'new robot pos : {newrobotpos}')
     robot_trajectory.append(newrobotpos)
     # compute move time for the target, if it is greater than 2 sec, the target will move multiple steps
     print(f'planning time was : {tic() - t0}')
@@ -241,7 +242,7 @@ def test_map3c():
 
 if __name__ == "__main__":
   # you should change the following line to test different maps
-  caught, numofmoves = test_map3c()
+  caught, numofmoves = test_map6()
   print('Number of moves made: {}; Target caught: {}.\n'.format(numofmoves, caught))
   plt.ioff()
   plt.show()
