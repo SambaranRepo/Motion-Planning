@@ -82,7 +82,7 @@ class RRTStar(RRT):
         # max valid rewire count
         return min(self.trees[tree].V_count, self.rewire_count)
 
-    def rrt_star(self):
+    def plan(self):
         """
         Based on algorithm found in: Incremental Sampling-based Algorithms for Optimal Motion Planning
         http://roboticsproceedings.org/rss06/p34.pdf

@@ -15,7 +15,7 @@ class RRT(RRTBase):
         """
         super().__init__(X, Q, x_init, x_goal, max_samples, r, prc)
 
-    def rrt_search(self):
+    def plan(self):
         """
         Create and return a Rapidly-exploring Random Tree, keeps expanding until can connect to goal
         https://en.wikipedia.org/wiki/Rapidly-exploring_random_tree

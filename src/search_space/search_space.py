@@ -4,7 +4,7 @@
 import numpy as np
 from rtree import index
 import math
-
+import numpy as np
 from src.utilities.geometry import es_points_along_line
 from src.utilities.obstacle_generation import obstacle_generator
 
@@ -29,8 +29,8 @@ class SearchSpace(object):
         self.dimension_lengths = dimension_lengths  # length of each dimension
         p = index.Property()
         p.dimension = self.dimensions
-        # if O is None:
-        #     self.obs = index.Index(interleaved=True, properties=p)
+        if O is None:
+            self.obs = index.Index(interleaved=True, properties=p)
         # else:
         #     # r-tree representation of obstacles
         #     # sanity check
@@ -47,7 +47,7 @@ class SearchSpace(object):
         :return: True if not inside an obstacle, False otherwise
         """
         # print(f' points : {x}')
-        return self.env[math.floor(x[0]), math.floor(x[1])] == 0
+        return self.env[int(np.around(x[0])), int(np.around(x[1]))] == 0
 
     def sample_free(self):
         """

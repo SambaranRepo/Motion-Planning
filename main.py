@@ -9,10 +9,15 @@ from pqdict import minpq
 from robotplanner import *
 from targetplanner import targetplanner
 from tqdm import tqdm
+from src.rrt.rrt import RRT
+from src.search_space.search_space import SearchSpace
+
+
+
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('planner', help='Which Motion Planning model would you like to implement : \n 1. Agent Centered Search ---> rtaa \n \
-2. Anytime Search ---> ara')
+2. Anytime Search ---> ara \n 3. Sample Based RRT search ---> rrt')
 args = parser.parse_args()
 algorithm = args.planner
 assert isinstance(algorithm, str)
@@ -53,20 +58,51 @@ def runtest(envmap, robotstart, targetstart, map):
   caught = False
   for i in tqdm(range(20000)):
     # call robot planner
+    X_dimensions = np.array([(0, envmap.shape[0]-1), (0, envmap.shape[1]-1)])  # dimensions of Search Space
+    max_samples = 50000
+    prc = 0.1
+    rewire_count = 32
+    # Q = np.array([(1,0)])  # length of tree edges
+    Q = [(1,1)]
+    r = 0.25  # length of smallest edge to check for intersection with obstacles
+
     if algorithm == 'rtaa':
       planner = RTAA(robotpos, targetpos,env, envmap)
-    else:
+    elif algorithm == 'ara':
        planner = AnytimeA_star(robotpos, targetpos,env, envmap)
-    type_planner = 'AgentCentred' if isinstance(planner, RTAA) else 'Anytime'
+    else:
+      if i%25 == 0 or index == len(path) - 1:
+        index = 1
+        X = SearchSpace(X_dimensions, envmap, None)
+        planner = RRT(X, Q, tuple(robotpos), tuple(targetpos), max_samples, r, prc)
+        path = planner.plan()
+        newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
+        if newrobotpos[0] == robotpos[0] or newrobotpos[1] == robotpos[1]:
+          movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos), 1))
+          print(f'movetime : {movetime}')
+        else:
+          movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos),2) / math.sqrt(2))
+          print(f'movetime : {movetime}')
+      else:
+        index += 1
+        newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
+
+
+    if isinstance(planner, RTAA):
+      type_planner = 'AgentCentred'
+    elif isinstance(planner, AnytimeA_star):
+      type_planner = 'Anytime'
+    else:
+      type_planner = 'RRT'
     t0 = tic()
 
     # newrobotpos = robotplanner(envmap, robotpos, targetpos, state_space)
-    newrobotpos = planner.plan()
-    print(f'new robot pos : {newrobotpos}')
+    if type_planner != 'RRT':
+      newrobotpos = planner.plan()
+      movetime = max(1, math.ceil((tic()-t0)/2.0))
+
     robot_trajectory.append(newrobotpos)
     # compute move time for the target, if it is greater than 2 sec, the target will move multiple steps
-    print(f'planning time was : {tic() - t0}')
-    movetime = max(1, math.ceil((tic()-t0)/2.0))
     # print(f'target moves : {movetime} steps')
     #check that the new commanded position is valid
     if ( newrobotpos[0] < 0 or newrobotpos[0] >= envmap.shape[0] or \
@@ -76,9 +112,9 @@ def runtest(envmap, robotstart, targetstart, map):
     elif ( envmap[newrobotpos[0], newrobotpos[1]] != 0 ):
       print('ERROR: invalid robot position commanded\n')
       break
-    elif (abs(newrobotpos[0]-robotpos[0]) > 1 or abs(newrobotpos[1]-robotpos[1]) > 1):
-      print('ERROR: invalid robot move commanded\n')
-      break
+    # elif (abs(newrobotpos[0]-robotpos[0]) > 1 or abs(newrobotpos[1]-robotpos[1]) > 1):
+    #   print('ERROR: invalid robot move commanded\n')
+    #   break
 
     # call target planner to see how the target moves within the robot planning time
     newtargetpos = targetplanner(envmap, robotpos, targetpos, targetstart, movetime)

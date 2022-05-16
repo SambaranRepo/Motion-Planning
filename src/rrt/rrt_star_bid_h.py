@@ -26,7 +26,7 @@ class RRTStarBidirectionalHeuristic(RRTStarBidirectional):
                          1 if conditional_rewire else rewire_count)
         self.original_rewire_count = rewire_count
 
-    def rrt_star_bid_h(self):
+    def plan(self):
         """
         Bidirectional RRT* using added heuristics
         :return: set of Vertices; Edges in form: vertex: [neighbor_1, neighbor_2, ...]

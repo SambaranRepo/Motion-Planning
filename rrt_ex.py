@@ -4,7 +4,7 @@ from src.rrt.rrt_star import RRTStar
 from src.search_space.search_space import SearchSpace
 from src.utilities.plotting import Plot
 
-envmap = np.loadtxt('./maps/map7_modified.txt')
+envmap = np.loadtxt('./maps/map0.txt')
 X_dimensions = np.array([(0, envmap.shape[0]-1), (0, envmap.shape[1]-1)])  # dimensions of Search Space
 # obstacles
 # Obstacles = np.array([(20, 20, 40, 40), (20, 60, 40, 80), (60, 20, 80, 40), (60, 60, 80, 80)])
