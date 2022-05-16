@@ -33,23 +33,23 @@ def robotplanner(envmap, robotpos, targetpos, state_space):
 graph = {}
 
 class Node():
-  def __init__(self, envmap, targetpos):
+  def __init__(self, envmap):
     self.x_max = envmap.shape[0]
     self.y_max = envmap.shape[1]
-    self.target = targetpos
+    
   
   def node_id(self, x, y):
     self.id = self.y_max * x + y
   
-  def heuristic(self,x,y):
-    self.h = np.linalg.norm([x, y]- self.target, 1)
+  def heuristic(self,x,y, target):
+    self.h = np.linalg.norm([x, y]- target, 1)
   
   def label(self):
     self.g = np.inf
   
-  def return_attribs(self,x,y, ara = False):
+  def return_attribs(self,x,y, target, ara = False):
     self.node_id(x,y)
-    self.heuristic(x,y)
+    self.heuristic(x,y,target)
     self.label()
     if ara : 
       return {self.id: {'pos': (x, y), 'g': self.g, 'h':self.h, 'v' : np.inf}}
@@ -64,7 +64,7 @@ class Environment():
     self.numofdirs = 8
     self.dX = [-1, -1, -1, 0, 0, 1, 1, 1]
     self.dY = [-1,  0,  1, -1, 1, -1, 0, 1]
-    self.node = Node(envmap, target_pos)
+    self.node = Node(envmap)
     self.x_max = self.map.shape[0]
     self.y_max = self.map.shape[1]
 
@@ -75,7 +75,7 @@ class Environment():
       return False
 
   def getSuccessors(self, node):
-    current_pos = self.node.return_attribs(node // self.y_max, node % self.y_max)[node]['pos']
+    current_pos = self.node.return_attribs(node // self.y_max, node % self.y_max,self.target_pos)[node]['pos']
     successor_nodes = []
     costs = []
     action_id = []
@@ -100,13 +100,13 @@ class Environment():
     return successor_nodes, costs, action_id
 
   def getHeuristic(self, node, target_pos):
-    pos = self.node.return_attribs(node // self.y_max, node % self.y_max)[node]['pos']
+    pos = self.node.return_attribs(node // self.y_max, node % self.y_max, self.target_pos)[node]['pos']
     return np.linalg.norm(pos - target_pos)
 
 class RTAA():
   def __init__(self, robotpos, targetpos, env, envmap):
     self.env = env
-    self.node = Node(envmap, targetpos)
+    self.node = Node(envmap)
     self.x_max = envmap.shape[0]
     self.y_max = envmap.shape[1]
     self.target_pos = targetpos
@@ -116,13 +116,14 @@ class RTAA():
     self.open = pqdict()
     self.close = []
     self.parent = {}
-    graph.update(self.node.return_attribs(*self.robot_pos))
+    if self.robot_id not in graph:
+      graph.update(self.node.return_attribs(*self.robot_pos, self.target_pos))
     graph[self.robot_id]['g'] = 0
 
   def plan(self):
     robot_id = self.robot_id
     self.open[robot_id] = graph[robot_id]['g'] + graph[robot_id]['h']
-    max_nodes = 500
+    max_nodes = 475
     expanded = 0
     caught = False
     while expanded < max_nodes:
@@ -135,7 +136,8 @@ class RTAA():
       else:
         for i in range(len(successors)):
           if successors[i] not in graph:
-            self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max)
+            self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max, self.target_pos)
+
             graph.update(self.child)
           
 
@@ -151,7 +153,7 @@ class RTAA():
               self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
               # self.open.update({successors[i] : graph[successors[i]]['g'] + graph[successors[i]]['h']})
       expanded = len(self.close)
-      if len(self.open) == 0:
+      if len(self.open) == 1:
         break
 
 
@@ -190,7 +192,7 @@ class RTAA():
 class AnytimeA_star():
   def __init__(self, robotpos, targetpos, env, envmap):
     self.env = env
-    self.node = Node(envmap, targetpos)
+    self.node = Node(envmap)
     self.x_max = envmap.shape[0]
     self.y_max = envmap.shape[1]
     self.target_pos = targetpos
@@ -200,11 +202,11 @@ class AnytimeA_star():
     self.open = pqdict()
     self.close = []
     self.parent = {}
-    graph.update(self.node.return_attribs(*self.robot_pos, ara = True))
-    graph.update(self.node.return_attribs(*self.target_pos, ara = True))
+    graph.update(self.node.return_attribs(*self.robot_pos, self.target_pos, ara = True))
+    graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
     graph[self.robot_id]['g'] = 0
 
-    self.epsilon = 10
+    self.epsilon = 100
 
   def compute_path(self):
     incons = pqdict()
@@ -218,7 +220,7 @@ class AnytimeA_star():
         successors, costs, action = self.env.getSuccessors(popped_id)
         for i in range(len(successors)):
           if successors[i] not in graph:
-              self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max, ara = True)
+              self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max, self.target_pos, ara = True)
               graph.update(self.child)
           
           if graph[successors[i]]['g'] > graph[popped_id]['g'] + costs[i]:

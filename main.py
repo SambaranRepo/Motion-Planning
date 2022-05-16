@@ -98,8 +98,6 @@ def runtest(envmap, robotstart, targetstart, map):
     f.canvas.flush_events()
     plt.show()
 
-    del planner
-
     # check if target is caught
     if (abs(robotpos[0]-targetpos[0]) <= 1 and abs(robotpos[1]-targetpos[1]) <= 1):
       print('robotpos = (%d,%d)' %(robotpos[0],robotpos[1]))
@@ -110,6 +108,7 @@ def runtest(envmap, robotstart, targetstart, map):
       target_x = [item[0] for item in target_trajectory]
       target_y = [item[1] for item in target_trajectory]
       caught = True
+      plt.close()
       f, ax = plt.subplots()
       ax.imshow( envmap.T, interpolation="none", cmap='gray_r', origin='lower', \
                 extent=(-0.5, envmap.shape[0]-0.5, -0.5, envmap.shape[1]-0.5) )
@@ -200,9 +199,9 @@ def test_map6():
   return runtest(envmap, robotstart, targetstart, 'map6')
 
 def test_map7():
-  robotstart = np.array([0, 0])
-  targetstart = np.array([4998, 4998])
-  mapfile = 'maps/map7.txt'
+  robotstart = np.array([0//10, 0//10])
+  targetstart = np.array([4998//10, 4998//10])
+  mapfile = 'maps/map7_modified.txt'
   envmap = loadtxt(mapfile)
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
@@ -211,9 +210,9 @@ def test_map7():
 
 
 def test_map1b():
-  robotstart = np.array([249, 1199])
-  targetstart = np.array([1649, 1899])
-  mapfile = 'maps/map1.txt'
+  robotstart = np.array([249//5, 1199//5])
+  targetstart = np.array([1649//5, 1899//5])
+  mapfile = 'maps/map1_modified.txt'
   envmap = loadtxt(mapfile)
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
@@ -242,7 +241,7 @@ def test_map3c():
 
 if __name__ == "__main__":
   # you should change the following line to test different maps
-  caught, numofmoves = test_map6()
+  caught, numofmoves = test_map1b()
   print('Number of moves made: {}; Target caught: {}.\n'.format(numofmoves, caught))
   plt.ioff()
   plt.show()
