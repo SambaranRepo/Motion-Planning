@@ -122,11 +122,12 @@ class RTAA():
 
   def plan(self):
     robot_id = self.robot_id
-    self.open[robot_id] = graph[robot_id]['g'] + graph[robot_id]['h']
-    max_nodes = 475
+    self.open.update({robot_id : graph[robot_id]['g'] + self.env.getHeuristic(robot_id, self.target_pos)})
+    max_nodes = 500
     expanded = 0
     caught = False
-    while expanded < max_nodes:
+    while len(self.open) != 0:
+      expanded +=1
       popped_id = self.open.pop()
       successors, costs, action = self.env.getSuccessors(popped_id)
       self.close.append(popped_id)
@@ -152,17 +153,15 @@ class RTAA():
             elif successors[i] not in self.open and successors[i] not in self.close:
               self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
               # self.open.update({successors[i] : graph[successors[i]]['g'] + graph[successors[i]]['h']})
-      expanded = len(self.close)
-      if len(self.open) == 1:
+      if expanded == max_nodes:
         break
-
 
     
     
   
     for key in self.open:
       graph[key]['h'] = self.env.getHeuristic(key, self.target_pos)
-      self.open[key] = graph[key]['g'] + graph[key]['h']
+      self.open[key] = graph[self.parent[key]]['g'] + np.linalg.norm(np.array(graph[self.parent[key]]['pos']) - np.array(graph[key]['pos'])) + graph[key]['h']
    
     if not caught:
       best_open_node, f_star = self.open.popitem()
@@ -284,6 +283,7 @@ class A_star():
     graph.update(self.node.return_attribs(*self.robot_pos, self.target_pos, ara = True))
     graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
     graph[self.robot_id]['g'] = 0
+
 
   def plan(self):
     robot_id = self.robot_id

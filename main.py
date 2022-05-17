@@ -11,8 +11,6 @@ from targetplanner import targetplanner
 from tqdm import tqdm
 from src.rrt.rrt import RRT
 from src.search_space.search_space import SearchSpace
-import cv2
-
 
 import argparse
 parser = argparse.ArgumentParser()
@@ -59,73 +57,76 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     max_samples = 50000
     prc = 0.1
     rewire_count = 32
-    # Q = np.array([(1,0)])  # length of tree edges
     Q = [(1,1)]
     r = 0.25  # length of smallest edge to check for intersection with obstacles
-
-    if algorithm == 'rtaa' and not map_7:
-      planner = RTAA(robotpos, targetpos,env, envmap)
-    elif algorithm == 'ara' and not map_7:
-       planner = AnytimeA_star(robotpos, targetpos,env, envmap)
-    elif algorithm == 'rrt':
-      if i%25 == 0 or index == len(path) - 1:
-        index = 1
-        X = SearchSpace(X_dimensions, envmap, None)
-        planner = RRT(X, Q, tuple(robotpos), tuple(targetpos), max_samples, r, prc)
-        path = planner.plan()
-        newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
-        if newrobotpos[0] == robotpos[0] or newrobotpos[1] == robotpos[1]:
-          movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos), 1))
-          print(f'movetime : {movetime}')
-        else:
-          movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos),2) / math.sqrt(2))
-          print(f'movetime : {movetime}')
-      else:
-        index += 1
-        newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
-
-    if map_7 :
-      type_planner = 'A_star_map7'
+    if map_7:
+      type_planner = 'A*_map7'
     else:
-      if isinstance(planner, RTAA):
+      if algorithm == 'rtaa':
+        planner = RTAA(robotpos, targetpos,env, envmap)
         type_planner = 'AgentCentred'
-      elif isinstance(planner, AnytimeA_star):
+      elif algorithm == 'ara':
+        planner = AnytimeA_star(robotpos, targetpos,env, envmap)
         type_planner = 'Anytime'
-      elif isinstance(planner, RRT):
-        type_planner = 'RRT'
-    t0 = tic()
+      elif algorithm == 'rrt':
+        type_planner = 'rrt'
 
     # newrobotpos = robotplanner(envmap, robotpos, targetpos, state_space)
-    if type_planner != 'RRT' and map_7 == False:
+    t0 = tic()
+    if type_planner == 'AgentCentred' or type_planner == 'Anytime':
       newrobotpos = planner.plan()
-      movetime = max(1, math.ceil((tic()-t0)/2.0))
-    else:
-      if i%250 == 0 or index > len(path) - 100:
-        index = 1
+    elif type_planner =='A*_map7': 
+      if i%550==0 or index > len(path) - 25:
         eps = 50
         planner = A_star(robotpos, targetpos, env, envmap, eps)
+        index = 1
         path = planner.plan()
         newrobotpos = path[index]
-        eps = max(1,eps // 4)
+        eps = max(1, eps // 2)
       else:
         index +=1
         newrobotpos = path[index]
-    movetime = max(1, math.ceil((tic()-t0)/2.0))
-
+    elif type_planner == 'rrt':
+      if i%25 == 0 or index > len(path) - 5:
+          index = 1
+          X = SearchSpace(X_dimensions, envmap, None)
+          planner = RRT(X, Q, tuple(robotpos), tuple(targetpos), max_samples, r, prc)
+          path = planner.plan()
+          newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
+          if newrobotpos[0] == robotpos[0] or newrobotpos[1] == robotpos[1]:
+            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos), 1))
+            print(f'movetime : {movetime}')
+          else:
+            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos),2) / math.sqrt(2))
+      else:
+        index += 1
+        newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
+    print(f'robot position : {newrobotpos}')
     robot_trajectory.append(newrobotpos)
+    movetime = max(1, math.ceil((tic()-t0)/2.0))
     # compute move time for the target, if it is greater than 2 sec, the target will move multiple steps
     # print(f'target moves : {movetime} steps')
     #check that the new commanded position is valid
-    if ( newrobotpos[0] < 0 or newrobotpos[0] >= envmap.shape[0] or \
-         newrobotpos[1] < 0 or newrobotpos[1] >= envmap.shape[1] ):
-      print('ERROR: out-of-map robot position commanded\n')
-      break
-    elif ( envmap[newrobotpos[0], newrobotpos[1]] != 0 ):
-      print('ERROR: invalid robot position commanded\n')
-      break
-    # elif (abs(newrobotpos[0]-robotpos[0]) > 1 or abs(newrobotpos[1]-robotpos[1]) > 1):
-    #   print('ERROR: invalid robot move commanded\n')
-    #   break
+    if type_planner != 'rrt':
+      if ( newrobotpos[0] < 0 or newrobotpos[0] >= envmap.shape[0] or \
+          newrobotpos[1] < 0 or newrobotpos[1] >=envmap.shape[1] ):
+        print('ERROR: out-of-map robot position commanded\n')
+        break
+      elif ( envmap[newrobotpos[0], newrobotpos[1]] != 0 ):
+        print('ERROR: invalid robot position commanded\n')
+        break
+      elif (abs(newrobotpos[0]-robotpos[0]) > 1 or abs(newrobotpos[1]-robotpos[1]) > 1):
+        print('ERROR: invalid robot move commanded\n')
+        break
+
+    else:
+      if ( newrobotpos[0] < 0 or newrobotpos[0] >= envmap.shape[0] or \
+          newrobotpos[1] < 0 or newrobotpos[1] >=envmap.shape[1] ):
+        print('ERROR: out-of-map robot position commanded\n')
+        break
+      elif (envmap[newrobotpos[0], newrobotpos[1]] != 0):
+        print('ERROR: invalid robot position commanded\n')
+        break
 
     # call target planner to see how the target moves within the robot planning time
     newtargetpos = targetplanner(envmap, robotpos, targetpos, targetstart, movetime)
@@ -134,7 +135,7 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     robotpos = newrobotpos
     targetpos = newtargetpos
     numofmoves += 1
-    print(f'robot position : {robotpos}')
+    
     print(f'target pos : {targetpos}')
     
     # draw positions
@@ -144,6 +145,7 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     ht[0].set_ydata(targetpos[1])
     f.canvas.flush_events()
     plt.show()
+    plt.savefig(f'./animations/{map}/{type_planner}/{i}.png', format = 'png', bbox_inches = 'tight')
 
     # check if target is caught
     if (abs(robotpos[0]-targetpos[0]) <= 1 and abs(robotpos[1]-targetpos[1]) <= 1):
@@ -189,9 +191,6 @@ def test_map1():
   targetstart = np.array([699, 1699])
   mapfile = 'maps/map1.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map1')
 
 def test_map2():
@@ -199,9 +198,6 @@ def test_map2():
   targetstart = np.array([7, 9])
   mapfile = 'maps/map2.txt'
   envmap = loadtxt(mapfile)
- # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map2')
   
 def test_map3():
@@ -209,10 +205,6 @@ def test_map3():
   targetstart = np.array([399, 399])
   mapfile = 'maps/map3.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  # return runtest(envmap, robotstart, targetstart, state_space)
   return runtest(envmap, robotstart, targetstart, 'map3')
 
 def test_map4():
@@ -220,9 +212,6 @@ def test_map4():
   targetstart = np.array([5, 6])
   mapfile = 'maps/map4.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map4')
 
 def test_map5():
@@ -230,9 +219,6 @@ def test_map5():
   targetstart = np.array([29, 59])
   mapfile = 'maps/map5.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map5')
 
 def test_map6():
@@ -240,9 +226,6 @@ def test_map6():
   targetstart = np.array([29, 36])
   mapfile = 'maps/map6.txt'
   envmap = loadtxt(mapfile)
- # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map6')
 
 def test_map7():
@@ -250,9 +233,6 @@ def test_map7():
   targetstart = np.array([int(0.1 * 4998), int(0.1 *4998)])
   mapfile = 'maps/map7_modified.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map7', map_7=True)
 
 
@@ -261,9 +241,6 @@ def test_map1b():
   targetstart = np.array([1649//5, 1899//5])
   mapfile = 'maps/map1_modified.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map1b')
 
 def test_map3b():
@@ -271,9 +248,6 @@ def test_map3b():
   targetstart = np.array([399, 399])
   mapfile = 'maps/map3.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map3b')
 
 def test_map3c():
@@ -281,9 +255,6 @@ def test_map3c():
   targetstart = np.array([399, 399])
   mapfile = 'maps/map3.txt'
   envmap = loadtxt(mapfile)
-  # state_space = StateSpace(envmap)
-  # state_space.create_hash()
-  # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
   return runtest(envmap, robotstart, targetstart, 'map3c')
 
 if __name__ == "__main__":

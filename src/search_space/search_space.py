@@ -47,8 +47,10 @@ class SearchSpace(object):
         :return: True if not inside an obstacle, False otherwise
         """
         # print(f' points : {x}')
+        # return self.env[math.floor(x[0]), math.floor(x[1])] == 0
+        # return self.env[math.ceil(x[0]), math.ceil(x[1])] == 0
         return self.env[int(np.around(x[0])), int(np.around(x[1]))] == 0
-
+    
     def sample_free(self):
         """
         Sample a location within X_free
