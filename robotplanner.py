@@ -205,7 +205,7 @@ class AnytimeA_star():
     graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
     graph[self.robot_id]['g'] = 0
 
-    self.epsilon = 5
+    self.epsilon = 15
 
   def compute_path(self):
     incons = pqdict()
@@ -254,7 +254,7 @@ class AnytimeA_star():
       self.incons = {}
       self.incons, path = self.compute_path()
       t1 = time.time()
-      if t1 - t0 >= 1:
+      if t1 - t0 >= 0.5:
         return path
       else:
         self.epsilon -= 0.1

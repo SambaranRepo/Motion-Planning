@@ -259,7 +259,7 @@ def test_map3c():
 
 if __name__ == "__main__":
   # you should change the following line to test different maps
-  caught, numofmoves = test_map7()
+  caught, numofmoves = test_map1b()
   print('Number of moves made: {}; Target caught: {}.\n'.format(numofmoves, caught))
   plt.ioff()
   plt.show()
