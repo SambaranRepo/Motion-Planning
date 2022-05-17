@@ -1,3 +1,4 @@
+from configparser import Interpolation
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -13,7 +14,7 @@ assert isinstance(map_no, int) and map_no in [1,7]
 envmap = np.loadtxt(f'./maps/map{map_no}.txt')
 x_size,y_size = envmap.shape
 
-newenvmap = cv2.resize(envmap, (int(0.2 * envmap.shape[1]), int(0.2 * envmap.shape[0])))
+newenvmap = cv2.resize(envmap, (int(0.1 * envmap.shape[1]), int(0.1* envmap.shape[0])), interpolation = cv2.INTER_CUBIC)
 f, ax = plt.subplots()
 ax.imshow( newenvmap.T, interpolation="none", cmap='gray_r', origin='lower', \
             extent=(-0.5, newenvmap.shape[0]-0.5, -0.5, newenvmap.shape[1]-0.5) )
@@ -22,4 +23,4 @@ ax.set_xlabel('x')
 ax.set_ylabel('y')  
 plt.show(block = True)
 
-np.savetxt(f"./maps/map{map_no}_modified.txt", newenvmap,fmt = '%d' )
+np.savetxt(f"./maps/map{map_no}_modified.txt", newenvmap, fmt="%d")

@@ -88,7 +88,7 @@ class Environment():
         continue
       else:
         if self.map[x_new, y_new] == 1 :
-          cost = np.inf
+          continue
         else:
           cost = np.linalg.norm([self.dX[i], self.dY[i]])
         # print(f'graph : {self.graph}')
@@ -266,3 +266,58 @@ class AnytimeA_star():
     
     print(f'path was about : {self.epsilon} optimal')
     return path
+
+class A_star():
+  def __init__(self, robotpos, targetpos, env, envmap, eps):
+    self.env = env
+    self.epsilon = eps
+    self.node = Node(envmap)
+    self.x_max = envmap.shape[0]
+    self.y_max = envmap.shape[1]
+    self.target_pos = targetpos
+    self.target_id = self.y_max * targetpos[0] + targetpos[1]
+    self.robot_pos = robotpos
+    self.robot_id = self.y_max * robotpos[0] + robotpos[1]
+    self.open = pqdict()
+    self.close = []
+    self.parent = {}
+    graph.update(self.node.return_attribs(*self.robot_pos, self.target_pos, ara = True))
+    graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
+    graph[self.robot_id]['g'] = 0
+
+  def plan(self):
+    robot_id = self.robot_id
+    self.open[robot_id] = graph[robot_id]['g'] + self.epsilon * self.env.getHeuristic(robot_id, self.target_pos)
+    while self.target_id not in self.close:
+      popped_id = self.open.pop()
+      self.close.append(popped_id)
+      successors, costs, action = self.env.getSuccessors(popped_id)
+      for i in range(len(successors)):
+          if successors[i] not in graph:
+            self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max, self.target_pos)
+
+            graph.update(self.child)
+          
+
+          if graph[successors[i]]['g'] > graph[popped_id]['g'] + costs[i]:
+            graph[successors[i]]['g'] = graph[popped_id]['g'] + costs[i]
+            self.parent.update({successors[i] : popped_id})
+
+            if successors[i] in self.open:
+              self.open[successors[i]] = graph[successors[i]]['g'] + self.epsilon * self.env.getHeuristic(successors[i], self.target_pos)
+              self.parent[successors[i]] = popped_id
+            elif successors[i] not in self.open and successors[i] not in self.close:
+              self.open.update({successors[i] : graph[successors[i]]['g'] + self.epsilon * self.env.getHeuristic(successors[i], self.target_pos)})
+
+    path = []
+    child = self.target_id
+    par = 0
+    while True:
+      par = self.parent[child]
+      path.append(graph[par]['pos'])
+      if par == self.robot_id:
+        break
+      else:
+        child = par
+
+    return path[::-1]

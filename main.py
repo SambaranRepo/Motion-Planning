@@ -11,7 +11,7 @@ from targetplanner import targetplanner
 from tqdm import tqdm
 from src.rrt.rrt import RRT
 from src.search_space.search_space import SearchSpace
-
+import cv2
 
 
 import argparse
@@ -29,16 +29,13 @@ def toc(tstart, nm=""):
   print('%s took: %s sec.\n' % (nm,(time.time() - tstart)))
 
 
-def runtest(envmap, robotstart, targetstart, map):
+def runtest(envmap, robotstart, targetstart, map, map_7 = False):
   # current positions of the target and robot
   robotpos = np.copy(robotstart);
   targetpos = np.copy(targetstart);
   env = Environment(envmap, targetpos)
   folder = './images/'
-  # environment
-  # envmap = loadtxt(mapfile)
-    
-  # draw the environment
+
   # transpose because imshow places the first dimension on the y-axis
   f, ax = plt.subplots()
   ax.imshow( envmap.T, interpolation="none", cmap='gray_r', origin='lower', \
@@ -66,11 +63,11 @@ def runtest(envmap, robotstart, targetstart, map):
     Q = [(1,1)]
     r = 0.25  # length of smallest edge to check for intersection with obstacles
 
-    if algorithm == 'rtaa':
+    if algorithm == 'rtaa' and not map_7:
       planner = RTAA(robotpos, targetpos,env, envmap)
-    elif algorithm == 'ara':
+    elif algorithm == 'ara' and not map_7:
        planner = AnytimeA_star(robotpos, targetpos,env, envmap)
-    else:
+    elif algorithm == 'rrt':
       if i%25 == 0 or index == len(path) - 1:
         index = 1
         X = SearchSpace(X_dimensions, envmap, None)
@@ -87,19 +84,33 @@ def runtest(envmap, robotstart, targetstart, map):
         index += 1
         newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
 
-
-    if isinstance(planner, RTAA):
-      type_planner = 'AgentCentred'
-    elif isinstance(planner, AnytimeA_star):
-      type_planner = 'Anytime'
+    if map_7 :
+      type_planner = 'A_star_map7'
     else:
-      type_planner = 'RRT'
+      if isinstance(planner, RTAA):
+        type_planner = 'AgentCentred'
+      elif isinstance(planner, AnytimeA_star):
+        type_planner = 'Anytime'
+      elif isinstance(planner, RRT):
+        type_planner = 'RRT'
     t0 = tic()
 
     # newrobotpos = robotplanner(envmap, robotpos, targetpos, state_space)
-    if type_planner != 'RRT':
+    if type_planner != 'RRT' and map_7 == False:
       newrobotpos = planner.plan()
       movetime = max(1, math.ceil((tic()-t0)/2.0))
+    else:
+      if i%250 == 0 or index > len(path) - 100:
+        index = 1
+        eps = 50
+        planner = A_star(robotpos, targetpos, env, envmap, eps)
+        path = planner.plan()
+        newrobotpos = path[index]
+        eps = max(1,eps // 4)
+      else:
+        index +=1
+        newrobotpos = path[index]
+    movetime = max(1, math.ceil((tic()-t0)/2.0))
 
     robot_trajectory.append(newrobotpos)
     # compute move time for the target, if it is greater than 2 sec, the target will move multiple steps
@@ -235,14 +246,14 @@ def test_map6():
   return runtest(envmap, robotstart, targetstart, 'map6')
 
 def test_map7():
-  robotstart = np.array([0//10, 0//10])
-  targetstart = np.array([4998//10, 4998//10])
+  robotstart = np.array([0, 0])
+  targetstart = np.array([int(0.1 * 4998), int(0.1 *4998)])
   mapfile = 'maps/map7_modified.txt'
   envmap = loadtxt(mapfile)
   # state_space = StateSpace(envmap)
   # state_space.create_hash()
   # state_space.graph[state_space.reverse_graph[tuple(robotstart)]]['g'] = 0
-  return runtest(envmap, robotstart, targetstart, 'map7')
+  return runtest(envmap, robotstart, targetstart, 'map7', map_7=True)
 
 
 def test_map1b():
@@ -277,7 +288,7 @@ def test_map3c():
 
 if __name__ == "__main__":
   # you should change the following line to test different maps
-  caught, numofmoves = test_map1b()
+  caught, numofmoves = test_map7()
   print('Number of moves made: {}; Target caught: {}.\n'.format(numofmoves, caught))
   plt.ioff()
   plt.show()
