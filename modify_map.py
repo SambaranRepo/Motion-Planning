@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 plt.ion()
 import argparse
 parser = argparse.ArgumentParser()
@@ -12,14 +13,7 @@ assert isinstance(map_no, int) and map_no in [1,7]
 envmap = np.loadtxt(f'./maps/map{map_no}.txt')
 x_size,y_size = envmap.shape
 
-res = 10 if map_no == 7 else 5
-newenvmap = np.zeros((x_size // res + 1, y_size //res + 1))
-for i in range(0, x_size, res):
-    for j in range(0, y_size, res):
-        if envmap[i:i+res, j:j+res].any() == 1:
-            newenvmap[i//res,j//res] = 1
-        
-
+newenvmap = cv2.resize(envmap, (int(0.2 * envmap.shape[1]), int(0.2 * envmap.shape[0])))
 f, ax = plt.subplots()
 ax.imshow( newenvmap.T, interpolation="none", cmap='gray_r', origin='lower', \
             extent=(-0.5, newenvmap.shape[0]-0.5, -0.5, newenvmap.shape[1]-0.5) )

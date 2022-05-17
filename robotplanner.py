@@ -264,5 +264,5 @@ class AnytimeA_star():
       if len(self.open) == 0:
         break
     
-
+    print(f'path was about : {self.epsilon} optimal')
     return path
