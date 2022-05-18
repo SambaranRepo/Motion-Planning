@@ -68,4 +68,34 @@ Below we show the results for the different test maps using the agent centered a
 <img src="gif/rtaa/map0.gif" width="49%" title="Agent Centered Search">
 </p>
 
+| map1 |
+<p float='left'>
+<img src="gif/ara/map1.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map1.gif" width="49%" title="Agent Centered Search">
+</p>
 
+| map1b |
+<p float='left'>
+<img src="gif/ara/map1b.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map1b.gif" width="49%" title="Agent Centered Search">
+</p>
+| map2 |
+<p float='left'>
+<img src="gif/ara/map2.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map2.gif" width="49%" title="Agent Centered Search">
+</p>
+| map3 |
+<p float='left'>
+<img src="gif/ara/map3.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map3.gif" width="49%" title="Agent Centered Search">
+</p>
+| map3b |
+<p float='left'>
+<img src="gif/ara/map3b.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map3b.gif" width="49%" title="Agent Centered Search">
+</p>
+| map3c |
+<p float='left'>
+<img src="gif/ara/map3c.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map3c.gif" width="49%" title="Agent Centered Search">
+</p>
