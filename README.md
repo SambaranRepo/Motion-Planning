@@ -64,8 +64,8 @@ Below we show the results for the different test maps using the agent centered a
 
 | map0 |
 <p float='left'>
-<img src="gif/ara/map0.gif" width="49%" alt="Anytime Search"> 
-<img src="gif/rtaa/map0.gif" width="49%" alt="Agent Centered Search">
+<img src="gif/ara/map0.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map0.gif" width="49%" title="Agent Centered Search">
 </p>
 
 
