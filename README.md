@@ -28,7 +28,7 @@ This file contains the target planner. It uses the [minimax decisiton rule](http
 This file contains test functions. It creates the planner as a particular  class of the Motion Planning algorithms and calls the plan() function of the planner object to get the next robot move. The file is run along with three possible command line arguments namely : ara to create an Anytime Search based planner, rtaa to create an Agent Centered Search based planner or rrt to create a Sampling Based RRT planner. After each robot move, the targetplanner function is called to get the next move of the target according to the MiniMax decision. The whole process is then repeated in a for loop until the robot catches up with the target. 
 Usage : 
 <pre>python3 main.py rtaa #Runs the agent centered planner</pre>
-<pre>python3 main.,py ara #Runs the anytime search planner</pre>
+<pre>python3 main.py ara #Runs the anytime search planner</pre>
 <pre>python3 main.py rrt #Runs the sampling based rrt planner</pre>
 
 To run the motion planning algorithm on different test maps, change line 273 test_map portion to one of the test cases defined above. For ex :
