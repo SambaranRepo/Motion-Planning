@@ -118,6 +118,6 @@ Below we show the results for the different test maps using the agent centered a
 For Map7, we got the epsilon sub-optimal A* algorithm working but were not able to make the Agent Centered Search work properly.
 
 | map7 |
-<p float='left'>
+<p float='center'>
 <img src="gif/map7_special.gif" title="Anytime Search"> 
 </p>
