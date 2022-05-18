@@ -99,3 +99,25 @@ Below we show the results for the different test maps using the agent centered a
 <img src="gif/ara/map3c.gif" width="49%" title="Anytime Search"> 
 <img src="gif/rtaa/map3c.gif" width="49%" title="Agent Centered Search">
 </p>
+| map4 |
+<p float='left'>
+<img src="gif/ara/map4.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map4.gif" width="49%" title="Agent Centered Search">
+</p>
+| map5 |
+<p float='left'>
+<img src="gif/ara/map5.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map5.gif" width="49%" title="Agent Centered Search">
+</p>
+| map6 |
+<p float='left'>
+<img src="gif/ara/map6.gif" width="49%" title="Anytime Search"> 
+<img src="gif/rtaa/map6.gif" width="49%" title="Agent Centered Search">
+</p>
+
+For Map7, we got the epsilon sub-optimal A* algorithm working but were not able to make the Agent Centered Search work properly.
+
+| map7 |
+<p float='left'>
+<img src="gif/map7_special.gif" title="Anytime Search"> 
+</p>
