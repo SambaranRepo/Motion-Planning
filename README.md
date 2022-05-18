@@ -63,11 +63,9 @@ Results of the motion planning algorithm for the different test cases are shown 
 Below we show the results for the different test maps using the agent centered and anytime search algorithms. 
 
 | map0 |
-<p align='left'>
-<img src="gif/ara/map0.gif" width="400"> 
-</p>
-<p align='right'>
-<img src="gif/rtaa/map0.gif" width="400">
+<p float='left'>
+<img src="gif/ara/map0.gif" width="50%"> 
+<img src="gif/rtaa/map0.gif" width="50%">
 </p>
 
 
