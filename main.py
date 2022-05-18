@@ -60,8 +60,9 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     rewire_count = 32
     Q = [(1,1)]
     r = 0.25  # length of smallest edge to check for intersection with obstacles
+    
     if map_7:
-      type_planner = f'{algorithm}_map7'
+      type_planner ='ara_map7'
     else:
       if algorithm == 'rtaa':
         planner = RTAA(robotpos, targetpos,env, envmap)
@@ -76,21 +77,10 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     t0 = tic()
     if type_planner == 'AgentCentred' or type_planner == 'Anytime':
       newrobotpos = planner.plan()
-    elif type_planner =='rtaa_map7': 
-      if i%350==0 or index > len(path) - 25:
-        max_nodes = 1000
-        planner = A_star(robotpos, targetpos, env, envmap, max_nodes)
-        index = 1
-        path = planner.plan()
-        newrobotpos = path[index]
-        max_nodes = max(300, max_nodes // 2)
-      else:
-        index +=1
-        newrobotpos = path[index]
     elif type_planner == 'ara_map7':
-      if i%350==0 or index > len(path) - 25:
+      if i%500==0 or index > len(path)-50:
         eps = 50
-        planner = A_star(robotpos, targetpos, env, envmap, eps)
+        planner = A_star(robotpos, targetpos, env, envmap, eps, partial = False)
         index = 1
         path = planner.plan()
         newrobotpos = path[index]
@@ -250,7 +240,9 @@ def test_map6():
 def test_map7():
   robotstart = np.array([0, 0])
   targetstart = np.array([int(0.1 * 4998), int(0.1 *4998)])
+  # targetstart = np.array([int(4998), int(4998)])
   mapfile = 'maps/map7_modified.txt'
+  # mapfile = 'maps/map7.txt'
   envmap = loadtxt(mapfile)
   return runtest(envmap, robotstart, targetstart, 'map7', map_7=True)
 
@@ -278,7 +270,7 @@ def test_map3c():
 
 if __name__ == "__main__":
   # you should change the following line to test different maps
-  caught, numofmoves = test_map1b()
+  caught, numofmoves = test_map7()
   print('Number of moves made: {}; Target caught: {}.\n'.format(numofmoves, caught))
   plt.ioff()
   plt.show()

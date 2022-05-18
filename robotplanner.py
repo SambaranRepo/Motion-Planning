@@ -267,10 +267,10 @@ class AnytimeA_star():
     return path
 
 class A_star():
-  def __init__(self, robotpos, targetpos, env, envmap, eps):
+  def __init__(self, robotpos, targetpos, env, envmap, max_nodes = 15000, eps= 50, partial = True):
     self.env = env
-    self.epsilon = eps
     self.node = Node(envmap)
+    self.max_nodes = max_nodes
     self.x_max = envmap.shape[0]
     self.y_max = envmap.shape[1]
     self.target_pos = targetpos
@@ -281,15 +281,28 @@ class A_star():
     self.close = []
     self.parent = {}
     graph.update(self.node.return_attribs(*self.robot_pos, self.target_pos, ara = True))
-    graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
+    # graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
     graph[self.robot_id]['g'] = 0
+    for key in graph:
+      if key == self.robot_id : 
+        continue
+      else:
+        graph[key]['g'] = np.inf
+    self.partial = partial
+    if self.partial:
+      self.epsilon = 1
+    else:
+      self.epsilon = eps
 
 
   def plan(self):
     robot_id = self.robot_id
     self.open[robot_id] = graph[robot_id]['g'] + self.epsilon * self.env.getHeuristic(robot_id, self.target_pos)
+    expanded = 0
+    flag = False
     while self.target_id not in self.close:
       popped_id = self.open.pop()
+      expanded += 1
       self.close.append(popped_id)
       successors, costs, action = self.env.getSuccessors(popped_id)
       for i in range(len(successors)):
@@ -308,9 +321,14 @@ class A_star():
               self.parent[successors[i]] = popped_id
             elif successors[i] not in self.open and successors[i] not in self.close:
               self.open.update({successors[i] : graph[successors[i]]['g'] + self.epsilon * self.env.getHeuristic(successors[i], self.target_pos)})
+      if self.partial:
+        if expanded == self.max_nodes:
+          flag = True
+          break
 
     path = []
-    child = self.target_id
+    child = self.target_id if not flag else self.open.pop()
+    path.append(graph[child]['pos'])
     par = 0
     while True:
       par = self.parent[child]
