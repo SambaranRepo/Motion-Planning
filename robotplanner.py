@@ -104,7 +104,7 @@ class Environment():
     return np.linalg.norm(pos - target_pos)
 
 class RTAA():
-  def __init__(self, robotpos, targetpos, env, envmap):
+  def __init__(self, robotpos, targetpos, env, envmap, max_nodes = 500):
     self.env = env
     self.node = Node(envmap)
     self.x_max = envmap.shape[0]
@@ -119,11 +119,11 @@ class RTAA():
     if self.robot_id not in graph:
       graph.update(self.node.return_attribs(*self.robot_pos, self.target_pos))
     graph[self.robot_id]['g'] = 0
+    self.max_nodes = max_nodes
 
   def plan(self):
     robot_id = self.robot_id
     self.open.update({robot_id : graph[robot_id]['g'] + self.env.getHeuristic(robot_id, self.target_pos)})
-    max_nodes = 500
     expanded = 0
     caught = False
     while len(self.open) != 0:
@@ -153,7 +153,7 @@ class RTAA():
             elif successors[i] not in self.open and successors[i] not in self.close:
               self.open.update({successors[i] : graph[successors[i]]['g'] + self.env.getHeuristic(successors[i], self.target_pos)})
               # self.open.update({successors[i] : graph[successors[i]]['g'] + graph[successors[i]]['h']})
-      if expanded == max_nodes:
+      if expanded == self.max_nodes:
         break
 
     
@@ -205,7 +205,7 @@ class AnytimeA_star():
     graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
     graph[self.robot_id]['g'] = 0
 
-    self.epsilon = 15
+    self.epsilon = 5
 
   def compute_path(self):
     incons = pqdict()

@@ -51,6 +51,7 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
   # now comes the main loop
   numofmoves = 0
   caught = False
+  movetime_rrt = 0
   for i in tqdm(range(20000)):
     # call robot planner
     X_dimensions = np.array([(0, envmap.shape[0]-1), (0, envmap.shape[1]-1)])  # dimensions of Search Space
@@ -60,7 +61,7 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     Q = [(1,1)]
     r = 0.25  # length of smallest edge to check for intersection with obstacles
     if map_7:
-      type_planner = 'A*_map7'
+      type_planner = f'{algorithm}_map7'
     else:
       if algorithm == 'rtaa':
         planner = RTAA(robotpos, targetpos,env, envmap)
@@ -75,8 +76,19 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     t0 = tic()
     if type_planner == 'AgentCentred' or type_planner == 'Anytime':
       newrobotpos = planner.plan()
-    elif type_planner =='A*_map7': 
-      if i%550==0 or index > len(path) - 25:
+    elif type_planner =='rtaa_map7': 
+      if i%350==0 or index > len(path) - 25:
+        max_nodes = 1000
+        planner = A_star(robotpos, targetpos, env, envmap, max_nodes)
+        index = 1
+        path = planner.plan()
+        newrobotpos = path[index]
+        max_nodes = max(300, max_nodes // 2)
+      else:
+        index +=1
+        newrobotpos = path[index]
+    elif type_planner == 'ara_map7':
+      if i%350==0 or index > len(path) - 25:
         eps = 50
         planner = A_star(robotpos, targetpos, env, envmap, eps)
         index = 1
@@ -86,6 +98,7 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
       else:
         index +=1
         newrobotpos = path[index]
+
     elif type_planner == 'rrt':
       if i%25 == 0 or index > len(path) - 5:
           index = 1
@@ -95,17 +108,22 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
           newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
           if newrobotpos[0] == robotpos[0] or newrobotpos[1] == robotpos[1]:
             movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos), 1))
-            print(f'movetime : {movetime}')
           else:
             movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos),2) / math.sqrt(2))
       else:
         index += 1
         newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
+        if newrobotpos[0] == robotpos[0] or newrobotpos[1] == robotpos[1]:
+            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos), 1))
+        else:
+            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos),2) / math.sqrt(2))
+      movetime_rrt +=movetime
+        
     print(f'robot position : {newrobotpos}')
     robot_trajectory.append(newrobotpos)
-    movetime = max(1, math.ceil((tic()-t0)/2.0))
+    if type_planner != 'rrt':
+      movetime = max(1, math.ceil((tic()-t0)/2.0))
     # compute move time for the target, if it is greater than 2 sec, the target will move multiple steps
-    # print(f'target moves : {movetime} steps')
     #check that the new commanded position is valid
     if type_planner != 'rrt':
       if ( newrobotpos[0] < 0 or newrobotpos[0] >= envmap.shape[0] or \
@@ -173,7 +191,8 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
       plt.savefig(folder + map + f'_{type_planner}.png', format = 'png', bbox_inches = 'tight')
       break
 
-      
+  if type_planner == 'rrt':
+    numofmoves = movetime_rrt      
 
   return caught, numofmoves
 
