@@ -67,7 +67,7 @@ Below we show the results for the different test maps using the agent centered a
 <img src="gif/ara/map0.gif"> 
 </p>
 <p alight='right'>
-<img src="gif/rtaa/map0/gif">
+<img src="gif/rtaa/map0.gif">
 </p>
 
 
