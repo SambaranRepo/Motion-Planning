@@ -64,10 +64,10 @@ Below we show the results for the different test maps using the agent centered a
 
 | map0 |
 <p align='left'>
-<img src="gif/ara/map0.gif" width="250"> 
+<img src="gif/ara/map0.gif" width="450"> 
 </p>
-<p alight='right'>
-<img src="gif/rtaa/map0.gif" width="250">
+<p align='right'>
+<img src="gif/rtaa/map0.gif" width="450">
 </p>
 
 
