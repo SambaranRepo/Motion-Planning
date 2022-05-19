@@ -64,6 +64,8 @@ starter_code
 Results of the motion planning algorithm for the different test cases are shown in the gif folder and the images folder. 
 
 ## Results
+### Search Based Motion Planning(Left : Anytime , Right : Agent Centered)
+
 Below we show the results for the different test maps using the agent centered and anytime search algorithms. 
 
 | map0 |
@@ -126,49 +128,50 @@ For Map7, we got the epsilon sub-optimal A* algorithm working but were not able 
 <img src="gif/map7_special.gif" title="Anytime Search"> 
 </p>
 
+### Sampling Based Motion Planning(RRTConnect)
 Finally, we present some results obtained by using the RRTConnect algorithm. It is able to find paths in complex maps like 3b and 1b that simple RRT was not able to find, but the path is not optimal. 
 
 | map0 |
 <p align='center'>
-<img src="gif/rrt_connect/map0.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map0.gif" width = "500"> 
 </p>
 
 | map1 |
 <p align='center'>
-<img src="gif/rrt_connect/map1.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map1.gif" width = "500"> 
 </p>
 
 | map1b |
 <p align='center'>
-<img src="gif/rrt_connect/map1b.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map1b.gif" width = "500"> 
 </p>
 
 | map2 |
 <p align='center'>
-<img src="gif/rrt_connect/map2.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map2.gif" width = "500"> 
 </p>
 
 | map3 |
 <p align='center'>
-<img src="gif/rrt_connect/map3.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map3.gif" width = "500"> 
 </p>
 
 | map3b |
 <p align='center'>
-<img src="gif/rrt_connect/map3b.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map3b.gif" width = "500"> 
 </p>
 
 | map4 |
 <p align='center'>
-<img src="gif/rrt_connect/map4.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map4.gif" width = "500"> 
 </p>
 
 | map5 |
 <p align='center'>
-<img src="gif/rrt_connect/map5.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map5.gif" width = "500"> 
 </p>
 
 | map6 |
 <p align='center'>
-<img src="gif/rrt_connect/map6.gif" title="Anytime Search"> 
+<img src="gif/rrt_connect/map6.gif" width = "500"> 
 </p>
