@@ -58,7 +58,7 @@ class RRTConnect(RRTBase):
             x_new, S = self.extend(tree, x)
         return x_new, S
 
-    def rrt_connect(self):
+    def plan(self):
         """
         RRTConnect
         :return: set of Vertices; Edges in form: vertex: [neighbor_1, neighbor_2, ...]

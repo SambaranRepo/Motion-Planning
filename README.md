@@ -5,7 +5,7 @@ In this assignment, we implement some Search Based and Sampling Based motion pla
 
 There are totally 11 scenes we test our motion planning algorithm. The 11 tests are implemented in **main.py** as functions `test_map0()`, `test_map1()`, ..., `test_map3c()`.
 
-We implement variations of the A* algorithm such as Agent Centered Search and Anytime Search for the search based motion planning, and Rapidly Exploring Random Tree(RRT) algorithm for the sampling based motion planning algorithm. 
+We implement variations of the A* algorithm such as Agent Centered Search and Anytime Search for the search based motion planning, and Rapidly Exploring Random Tree(RRT), RRTConnect algorithms for the sampling based motion planning algorithm. 
 
 ## Environment Setup
 
@@ -35,6 +35,10 @@ To run the motion planning algorithm on different test maps, change line 273 tes
 <pre>caught, numofmoves = test_map1b()</pre>
 <pre>caught, numofmoves = test_map5()</pre>
 
+#### 4. rrt_connect.py
+In this script, we try to implement the RRTConnect algorithm on the maps. Since vanilla RRT does not perform well in maze like maps, we try to see the performance of RRTConnect because it tries to construct trees from both the start and the goal and connects both the trees. Hence it is expected to atleast find a feasible path to the goal, although it may not be optimal. It is also possible that in certain runs, we don't find a path because of the limit on maximum number of samples to find the connection. 
+Usage : 
+<pre>python3 rrt_connect.py</pre>
 
 ## Directory
 <pre>
@@ -120,4 +124,51 @@ For Map7, we got the epsilon sub-optimal A* algorithm working but were not able 
 | map7 |
 <p align='center'>
 <img src="gif/map7_special.gif" title="Anytime Search"> 
+</p>
+
+Finally, we present some results obtained by using the RRTConnect algorithm. It is able to find paths in complex maps like 3b and 1b that simple RRT was not able to find, but the path is not optimal. 
+
+| map0 |
+<p align='center'>
+<img src="gif/rrt_connect/map0.gif" title="Anytime Search"> 
+</p>
+
+| map1 |
+<p align='center'>
+<img src="gif/rrt_connect/map1.gif" title="Anytime Search"> 
+</p>
+
+| map1b |
+<p align='center'>
+<img src="gif/rrt_connect/map1b.gif" title="Anytime Search"> 
+</p>
+
+| map2 |
+<p align='center'>
+<img src="gif/rrt_connect/map2.gif" title="Anytime Search"> 
+</p>
+
+| map3 |
+<p align='center'>
+<img src="gif/rrt_connect/map3.gif" title="Anytime Search"> 
+</p>
+
+| map3b |
+<p align='center'>
+<img src="gif/rrt_connect/map3b.gif" title="Anytime Search"> 
+</p>
+
+| map4 |
+<p align='center'>
+<img src="gif/rrt_connect/map4.gif" title="Anytime Search"> 
+</p>
+
+| map5 |
+<p align='center'>
+<img src="gif/rrt_connect/map5.gif" title="Anytime Search"> 
+</p>
+
+| map6 |
+<p align='center'>
+<img src="gif/rrt_connect/map6.gif" title="Anytime Search"> 
 </p>

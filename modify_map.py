@@ -1,3 +1,9 @@
+'''
+: This script resizes map1b and map7 using cv2.resize
+: The new map is saved as modified_map in  the maps folder and motion planning algorithms are tested in t hese modified maps.
+'''
+
+
 from configparser import Interpolation
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,8 +19,9 @@ assert isinstance(map_no, int) and map_no in [1,7]
 
 envmap = np.loadtxt(f'./maps/map{map_no}.txt')
 x_size,y_size = envmap.shape
+res = 0.1 if map_no == 7 else 0.2
 
-newenvmap = cv2.resize(envmap, (int(0.1 * envmap.shape[1]), int(0.1* envmap.shape[0])), interpolation = cv2.INTER_CUBIC)
+newenvmap = cv2.resize(envmap, (int(res * envmap.shape[1]), int(res* envmap.shape[0])), interpolation = cv2.INTER_CUBIC)
 f, ax = plt.subplots()
 ax.imshow( newenvmap.T, interpolation="none", cmap='gray_r', origin='lower', \
             extent=(-0.5, newenvmap.shape[0]-0.5, -0.5, newenvmap.shape[1]-0.5) )

@@ -18,7 +18,8 @@ parser.add_argument('planner', help='Which Motion Planning model would you like 
 2. Anytime Search ---> ara \n 3. Sample Based RRT search ---> rrt')
 args = parser.parse_args()
 algorithm = args.planner
-assert isinstance(algorithm, str)
+assert isinstance(algorithm, str), 'Please enter the algorithm you want to implement. Run python3 main.py -h for more info on arguments'
+assert algorithm in ['rrt', 'rtaa', 'ara'], 'Please enter an algorithm mentioned in helper. Run python3 main.py -h for possible inputs'
 
 # functions to time how long planning takes  
 def tic():
@@ -80,7 +81,7 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
     elif type_planner == 'ara_map7':
       if i%500==0 or index > len(path)-50:
         eps = 50
-        planner = A_star(robotpos, targetpos, env, envmap, eps, partial = False)
+        planner = A_star(robotpos, targetpos, env, envmap, eps)
         index = 1
         path = planner.plan()
         newrobotpos = path[index]
@@ -97,9 +98,9 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
           path = planner.plan()
           newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))
           if newrobotpos[0] == robotpos[0] or newrobotpos[1] == robotpos[1]:
-            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos), 1))
+            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos), 1)) + (time.time() - t0)
           else:
-            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos),2) / math.sqrt(2))
+            movetime = int(np.linalg.norm(np.array(newrobotpos) - np.array(robotpos),2) / math.sqrt(2)) + (time.time() - t0)
       else:
         index += 1
         newrobotpos = (int(np.around(path[index][0])), int(np.around(path[index][1])))

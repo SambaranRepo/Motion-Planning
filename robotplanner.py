@@ -33,6 +33,12 @@ def robotplanner(envmap, robotpos, targetpos, state_space):
 graph = {}
 
 class Node():
+  '''
+  : Node class to create the graph of the environment at go. 
+  : Each coordinate in the map is represented as a dictionary. 
+  : The key is an integer ranging from 0 to x_max * y_max - 1, where x_max and y_max are the size of the map.
+  : The node contains the coordinates of the point, the label g, the heuristic value h and v-value in case of anytime search implemented
+  '''
   def __init__(self, envmap):
     self.x_max = envmap.shape[0]
     self.y_max = envmap.shape[1]
@@ -58,6 +64,13 @@ class Node():
 
 
 class Environment():
+  '''
+  : Environment helper class
+  : isGoal() -> Checks if the given coordinate is the goal position or not. 
+  : getSuccessors() -> Given a parent node, produces a list of all children nodes of this parent, the cost of corresponding transition.
+  : getHeuristic() -> Given a node, find the heuristic value for this node which is the distance to the goal from this node. 
+  '''
+  
   def __init__(self, envmap, target_pos):
     self.map = envmap
     self.target_pos = target_pos
@@ -82,8 +95,6 @@ class Environment():
     for i in range(self.numofdirs):
       x_new = (current_pos[0] + self.dX[i])
       y_new = (current_pos[1] + self.dY[i])
-      # print(f'x new : {x_new}')
-      # print(f' y new : {y_new}')
       if x_new < 0 or y_new < 0 or x_new >= self.map.shape[0] or y_new >= self.map.shape[1]:
         continue
       else:
@@ -91,7 +102,6 @@ class Environment():
           continue
         else:
           cost = np.linalg.norm([self.dX[i], self.dY[i]])
-        # print(f'graph : {self.graph}')
         child = self.y_max * x_new + y_new
 
         successor_nodes.append(child)
@@ -104,6 +114,13 @@ class Environment():
     return np.linalg.norm(pos - target_pos)
 
 class RTAA():
+  '''
+  : Agent Centered Search based class implementation 
+  : Searches at most N nodes centered around the robot to find the next promising node to move to. 
+  : plan() -> run the A* algorithm planner with current robot position, expand N nodes and find the path to the next promising node. 
+  : Corrects the heuristic value of the expanded nodes. 
+  '''
+  
   def __init__(self, robotpos, targetpos, env, envmap, max_nodes = 500):
     self.env = env
     self.node = Node(envmap)
@@ -155,10 +172,7 @@ class RTAA():
               # self.open.update({successors[i] : graph[successors[i]]['g'] + graph[successors[i]]['h']})
       if expanded == self.max_nodes:
         break
-
-    
-    
-  
+      
     for key in self.open:
       graph[key]['h'] = self.env.getHeuristic(key, self.target_pos)
       self.open[key] = graph[self.parent[key]]['g'] + np.linalg.norm(np.array(graph[self.parent[key]]['pos']) - np.array(graph[key]['pos'])) + graph[key]['h']
@@ -189,7 +203,15 @@ class RTAA():
 
 
 class AnytimeA_star():
-  def __init__(self, robotpos, targetpos, env, envmap):
+  '''
+  : Anytime Search algorithm for motion planning. 
+  : Class for implementation of the Anytime Repairing A* algorithm. 
+  : Produces the next move of the robot within a given time constraint by computing an epsilon sub-optimal path. 
+  : If time permits, decrease the epsilon value and get a better path. 
+  : Keeps track of previously searched label-values by keeping track of inconsistent nodes. 
+  '''
+  
+  def __init__(self, robotpos, targetpos, env, envmap, eps = 5):
     self.env = env
     self.node = Node(envmap)
     self.x_max = envmap.shape[0]
@@ -205,7 +227,7 @@ class AnytimeA_star():
     graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
     graph[self.robot_id]['g'] = 0
 
-    self.epsilon = 5
+    self.epsilon = eps
 
   def compute_path(self):
     incons = pqdict()
@@ -256,6 +278,7 @@ class AnytimeA_star():
       t1 = time.time()
       if t1 - t0 >= 0.5:
         return path
+
       else:
         self.epsilon -= 0.1
         for key in self.incons.keys():
@@ -267,10 +290,16 @@ class AnytimeA_star():
     return path
 
 class A_star():
-  def __init__(self, robotpos, targetpos, env, envmap, max_nodes = 15000, eps= 50, partial = True):
+  '''
+  : Class to implement a single epsilon sub-optimal A* algorithm for use only in MAP7. 
+  : Run a single instance of the planner to compute an epsilon sub-optimal path from current robot position to the current target. 
+  : Return the full computed path to the goal. 
+  : Make the robot follow the path for some time and then call the planner again to generate a new path from new robot position to new target. 
+  : As we reach closer and closer to the goal, the epsilon value is reduced so that in the later stages of the search, we find the optimal path.
+  '''
+  def __init__(self, robotpos, targetpos, env, envmap,eps= 50):
     self.env = env
     self.node = Node(envmap)
-    self.max_nodes = max_nodes
     self.x_max = envmap.shape[0]
     self.y_max = envmap.shape[1]
     self.target_pos = targetpos
@@ -281,37 +310,27 @@ class A_star():
     self.close = []
     self.parent = {}
     graph.update(self.node.return_attribs(*self.robot_pos, self.target_pos, ara = True))
-    # graph.update(self.node.return_attribs(*self.target_pos, self.target_pos ,ara = True))
     graph[self.robot_id]['g'] = 0
     for key in graph:
       if key == self.robot_id : 
         continue
       else:
         graph[key]['g'] = np.inf
-    self.partial = partial
-    if self.partial:
-      self.epsilon = 1
-    else:
-      self.epsilon = eps
+    self.epsilon = eps
 
 
   def plan(self):
     robot_id = self.robot_id
     self.open[robot_id] = graph[robot_id]['g'] + self.epsilon * self.env.getHeuristic(robot_id, self.target_pos)
-    expanded = 0
-    flag = False
     while self.target_id not in self.close:
       popped_id = self.open.pop()
-      expanded += 1
       self.close.append(popped_id)
       successors, costs, action = self.env.getSuccessors(popped_id)
       for i in range(len(successors)):
           if successors[i] not in graph:
             self.child = self.node.return_attribs(successors[i] // self.y_max, successors[i] % self.y_max, self.target_pos)
-
             graph.update(self.child)
           
-
           if graph[successors[i]]['g'] > graph[popped_id]['g'] + costs[i]:
             graph[successors[i]]['g'] = graph[popped_id]['g'] + costs[i]
             self.parent.update({successors[i] : popped_id})
@@ -321,13 +340,9 @@ class A_star():
               self.parent[successors[i]] = popped_id
             elif successors[i] not in self.open and successors[i] not in self.close:
               self.open.update({successors[i] : graph[successors[i]]['g'] + self.epsilon * self.env.getHeuristic(successors[i], self.target_pos)})
-      if self.partial:
-        if expanded == self.max_nodes:
-          flag = True
-          break
 
     path = []
-    child = self.target_id if not flag else self.open.pop()
+    child = self.target_id
     path.append(graph[child]['pos'])
     par = 0
     while True:
