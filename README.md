@@ -60,6 +60,7 @@ starter_code
 └── robotplanner.py
 └── targetplanner.py
 └── modify_map.py
+└── rrt_connect.py
 </pre>
 Results of the motion planning algorithm for the different test cases are shown in the gif folder and the images folder. 
 
