@@ -50,17 +50,17 @@ starter_code
 ├── maps
 ├── __pycache__
 └── src
-    ├── rrt
-    │   └── __pycache__
-    ├── search_space
-    │   └── __pycache__
-    └── utilities
-        └── __pycache__
-└── main.py
-└── robotplanner.py
-└── targetplanner.py
-└── modify_map.py
-└── rrt_connect.py
+│    ├── rrt
+│    │   └── __pycache__
+│    ├── search_space
+│    │   └── __pycache__
+│    └── utilities
+│        └── __pycache__
+│── main.py
+│── robotplanner.py
+│── targetplanner.py
+│── modify_map.py
+│── rrt_connect.py
 </pre>
 Results of the motion planning algorithm for the different test cases are shown in the gif folder and the images folder. 
 
