@@ -44,6 +44,7 @@ def runtest(envmap, robotstart, targetstart, map, map_7 = False):
   ax.set_ylabel('y')  
   hr = ax.plot(robotpos[0], robotpos[1], 'bs')
   ht = ax.plot(targetpos[0], targetpos[1], 'rs')
+  plt.show(block = True)
   f.canvas.flush_events()
   robot_trajectory = []
   target_trajectory = []
@@ -242,8 +243,8 @@ def test_map7():
   robotstart = np.array([0, 0])
   targetstart = np.array([int(0.1 * 4998), int(0.1 *4998)])
   # targetstart = np.array([int(4998), int(4998)])
-  mapfile = 'maps/map7_modified.txt'
-  # mapfile = 'maps/map7.txt'
+  # mapfile = 'maps/map7_modified.txt'
+  mapfile = 'maps/map7.txt'
   envmap = loadtxt(mapfile)
   return runtest(envmap, robotstart, targetstart, 'map7', map_7=True)
 

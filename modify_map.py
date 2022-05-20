@@ -21,7 +21,7 @@ envmap = np.loadtxt(f'./maps/map{map_no}.txt')
 x_size,y_size = envmap.shape
 res = 0.1 if map_no == 7 else 0.2
 
-newenvmap = cv2.resize(envmap, (int(res * envmap.shape[1]), int(res* envmap.shape[0])), interpolation = cv2.INTER_CUBIC)
+newenvmap = cv2.resize(envmap, (int(res * envmap.shape[1]), int(res* envmap.shape[0])))
 f, ax = plt.subplots()
 ax.imshow( newenvmap.T, interpolation="none", cmap='gray_r', origin='lower', \
             extent=(-0.5, newenvmap.shape[0]-0.5, -0.5, newenvmap.shape[1]-0.5) )
