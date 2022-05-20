@@ -65,7 +65,7 @@ starter_code
 Results of the motion planning algorithm for the different test cases are shown in the gif folder and the images folder. 
 
 ## Technical report
-* [Sambaran Ghosal. "Dynamic Programming for Deterministic Shortest Path problem" April 2022](report/ECE276B_Motion_Planning.pdf)
+* [Sambaran Ghosal. "Motion Planning to catch moving target" April 2022](report/ECE276B_Motion_Planning.pdf)
 
 ## Results
 ### Search Based Motion Planning(Left : Anytime , Right : Agent Centered)
